@@ -1,0 +1,1 @@
+document.addEventListener("DOMContentLoaded",(function(){setTimeout((function(){const e=document.getElementById("root");if(e&&e.children.length<=1){console.error("React 应用加载失败，尝试重新加载");const e=document.createElement("script");e.src="assets/index.js",document.body.appendChild(e)}}),1e3)}));
