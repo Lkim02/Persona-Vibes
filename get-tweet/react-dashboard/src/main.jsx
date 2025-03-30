@@ -2,18 +2,43 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
+import useAuthStore from './store/authStore'
+import useTweetStore from './store/tweetStore'
+import { initializeErrorListener } from './utils/errorHandler'
 
-// 确保 React 应用能在 Chrome 扩展环境中正确初始化
-const initApp = () => {
+// Initialize authentication and tweet stores
+const initializeStores = async () => {
+  // Initialize error listener
+  initializeErrorListener();
+  
+  // Initialize auth store
+  const authStore = useAuthStore.getState();
+  await authStore.init();
+  
+  // Initialize tweet store and sync status listener
+  const tweetStore = useTweetStore.getState();
+  tweetStore.initSyncStatusListener();
+  
+  // If user is authenticated, load tweets
+  if (authStore.isAuthenticated) {
+    tweetStore.loadTweets();
+  }
+};
+
+// Ensure React app initializes correctly in Chrome extension environment
+const initApp = async () => {
   const rootElement = document.getElementById('root');
   
   if (rootElement) {
-    // 清除加载指示器
+    // Clear loading indicator
     while (rootElement.firstChild) {
       rootElement.removeChild(rootElement.firstChild);
     }
     
-    // 渲染 React 应用
+    // Initialize stores before rendering
+    await initializeStores();
+    
+    // Render React application
     ReactDOM.createRoot(rootElement).render(
       <React.StrictMode>
         <App />
@@ -26,10 +51,10 @@ const initApp = () => {
   }
 };
 
-// 等待 DOM 完全加载后初始化应用
+// Wait for DOM to fully load before initializing app
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initApp);
 } else {
-  // 如果 DOM 已经加载完成，直接初始化应用
+  // If DOM is already loaded, initialize app immediately
   initApp();
 }

@@ -4,6 +4,9 @@
 // Create Tweet API request URL pattern
 const TWEET_API_URL_PATTERN = "https://x.com/i/api/graphql/UYy4T67XpYXgWKOafKXB_A/CreateTweet";
 
+// Server API URL
+const SERVER_API_URL = "http://localhost:3000/api";
+
 // Monitoring status
 let isMonitoringEnabled = true;
 
@@ -61,10 +64,51 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('Reply Content:', message.data.content);
     sendResponse({ success: true });
   }
+  // Handle show error message
+  else if (message.action === 'showError' && message.data) {
+    showErrorNotification(message.data.message);
+    sendResponse({ success: true });
+  }
+  // Handle manual sync request
+  else if (message.action === 'syncToServer') {
+    syncAllToServer()
+      .then(result => {
+        sendResponse({ success: true, result });
+      })
+      .catch(error => {
+        console.error('Error during manual sync:', error);
+        sendResponse({ success: false, error: error.message });
+      });
+    return true; // Keep the message channel open for async response
+  }
   
   // Return true for async response
   return true;
 });
+
+// Show error notification
+function showErrorNotification(errorMessage) {
+  // Show notification if permissions allow
+  if (chrome.notifications) {
+    chrome.notifications.create({
+      type: 'basic',
+      iconUrl: 'icons/icon48.png',
+      title: 'Twitter Activity Monitor Error',
+      message: errorMessage,
+      priority: 2
+    });
+  }
+  
+  // Also send error to popup if it's open
+  chrome.runtime.sendMessage({
+    action: 'displayError',
+    data: {
+      message: errorMessage
+    }
+  });
+  
+  console.error('Twitter Activity Monitor Error:', errorMessage);
+}
 
 // Network request listener
 let networkRequestListener = null;
@@ -107,7 +151,8 @@ function setupNetworkMonitoring() {
             content: tweetText,
             timestamp: new Date().toISOString(),
             url: details.initiator || details.documentUrl,
-            replyToTweetId: inReplyToTweetId
+            replyToTweetId: inReplyToTweetId,
+            tweetId: `tweet_${Date.now()}`
           };
           
           // Save data based on whether it's a reply
@@ -124,9 +169,13 @@ function setupNetworkMonitoring() {
           
           // Notify content script that tweet was captured
           notifyContentScript(tweetData, inReplyToTweetId ? 'reply' : 'tweet');
+          
+          // Save to server if user is authenticated
+          saveToServer(tweetData, inReplyToTweetId ? true : false);
         }
       } catch (error) {
         console.error('Twitter Activity Monitor: Error processing request data', error);
+        showErrorNotification('Error processing tweet data: ' + error.message);
       }
     }
   };
@@ -190,6 +239,209 @@ function saveReply(replyData) {
     
     chrome.storage.local.set({ replies }, () => {
       console.log('Twitter Activity Monitor: New reply saved');
+    });
+  });
+}
+
+// Save tweet or reply to server
+async function saveToServer(tweetData, isReply) {
+  try {
+    // Check if user is authenticated
+    const authData = await new Promise((resolve) => {
+      chrome.storage.local.get(['auth'], (result) => {
+        resolve(result.auth || {});
+      });
+    });
+    
+    // If no token, don't try to save to server
+    if (!authData.token) {
+      console.log('Twitter Activity Monitor: Not saving to server - user not authenticated');
+      return;
+    }
+    
+    // Prepare request data
+    const requestData = {
+      tweetId: tweetData.tweetId,
+      content: tweetData.content,
+      isReply: isReply || false
+    };
+    
+    // Make API request
+    const response = await fetch(`${SERVER_API_URL}/tweets`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authData.token}`
+      },
+      body: JSON.stringify(requestData)
+    });
+    
+    // Check response
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error saving to server');
+    }
+    
+    const responseData = await response.json();
+    console.log('Twitter Activity Monitor: Successfully saved to server', responseData);
+    
+    // Update sync status
+    updateSyncStatus({
+      lastSynced: new Date().toISOString(),
+      error: null
+    });
+    
+    return responseData;
+  } catch (error) {
+    console.error('Twitter Activity Monitor: Error saving to server', error);
+    
+    // Update sync status with error
+    updateSyncStatus({
+      error: error.message
+    });
+    
+    // Show error notification
+    showErrorNotification(`Error saving to server: ${error.message}`);
+    
+    throw error;
+  }
+}
+
+// Sync all local tweets and replies to server
+async function syncAllToServer() {
+  try {
+    // Update sync status to indicate syncing
+    updateSyncStatus({
+      isSyncing: true,
+      error: null
+    });
+    
+    // Check if user is authenticated
+    const authData = await new Promise((resolve) => {
+      chrome.storage.local.get(['auth'], (result) => {
+        resolve(result.auth || {});
+      });
+    });
+    
+    // If no token, don't try to sync
+    if (!authData.token) {
+      throw new Error('User not authenticated');
+    }
+    
+    // Get all tweets and replies
+    const storage = await new Promise((resolve) => {
+      chrome.storage.local.get(['tweets', 'replies'], (result) => {
+        resolve({
+          tweets: result.tweets || [],
+          replies: result.replies || []
+        });
+      });
+    });
+    
+    // Combine tweets and replies for syncing
+    const allTweets = [
+      ...storage.tweets.map(tweet => ({ ...tweet, isReply: false })),
+      ...storage.replies.map(reply => ({ ...reply, isReply: true }))
+    ];
+    
+    // Skip if no tweets to sync
+    if (allTweets.length === 0) {
+      console.log('Twitter Activity Monitor: No tweets to sync');
+      updateSyncStatus({
+        isSyncing: false,
+        lastSynced: new Date().toISOString(),
+        error: null
+      });
+      return { synced: 0, total: 0 };
+    }
+    
+    console.log(`Twitter Activity Monitor: Syncing ${allTweets.length} tweets/replies to server`);
+    
+    // Sync each tweet/reply
+    let syncedCount = 0;
+    let errors = [];
+    
+    for (const tweet of allTweets) {
+      try {
+        // Prepare request data
+        const requestData = {
+          tweetId: tweet.tweetId,
+          content: tweet.content,
+          isReply: tweet.isReply || false
+        };
+        
+        // Make API request
+        const response = await fetch(`${SERVER_API_URL}/tweets`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authData.token}`
+          },
+          body: JSON.stringify(requestData)
+        });
+        
+        // Check response
+        if (!response.ok) {
+          const errorData = await response.json();
+          // If tweet already exists, that's okay
+          if (errorData.message && errorData.message.includes('already exists')) {
+            syncedCount++;
+            continue;
+          }
+          throw new Error(errorData.message || 'Error saving to server');
+        }
+        
+        syncedCount++;
+      } catch (error) {
+        console.error(`Error syncing tweet ${tweet.tweetId}:`, error);
+        errors.push(`${tweet.tweetId}: ${error.message}`);
+      }
+    }
+    
+    // Update sync status
+    updateSyncStatus({
+      isSyncing: false,
+      lastSynced: new Date().toISOString(),
+      error: errors.length > 0 ? `Failed to sync ${errors.length} tweets` : null
+    });
+    
+    console.log(`Twitter Activity Monitor: Synced ${syncedCount}/${allTweets.length} tweets/replies`);
+    
+    return {
+      synced: syncedCount,
+      total: allTweets.length,
+      errors: errors.length > 0 ? errors : null
+    };
+  } catch (error) {
+    console.error('Twitter Activity Monitor: Error during sync', error);
+    
+    // Update sync status with error
+    updateSyncStatus({
+      isSyncing: false,
+      error: error.message
+    });
+    
+    // Show error notification
+    showErrorNotification(`Error syncing with server: ${error.message}`);
+    
+    throw error;
+  }
+}
+
+// Update sync status in storage
+function updateSyncStatus(statusUpdate) {
+  chrome.storage.local.get(['syncStatus'], (result) => {
+    const currentStatus = result.syncStatus || {};
+    const newStatus = { ...currentStatus, ...statusUpdate };
+    
+    chrome.storage.local.set({ syncStatus: newStatus }, () => {
+      console.log('Twitter Activity Monitor: Sync status updated', newStatus);
+      
+      // Notify popup about status update
+      chrome.runtime.sendMessage({
+        action: 'syncStatusUpdated',
+        data: newStatus
+      });
     });
   });
 }
