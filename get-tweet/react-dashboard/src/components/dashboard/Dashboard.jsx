@@ -6,7 +6,9 @@ import useTweetStore from '../../store/tweetStore';
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const { syncTweetsToServer, syncStatus, loadTweetsFromServer } = useTweetStore();
   const [isMonitoring, setIsMonitoring] = useState(true);
+  const [syncMessage, setSyncMessage] = useState('');
   
   // Load monitoring state from storage when component mounts
   useEffect(() => {
@@ -31,6 +33,29 @@ const Dashboard = () => {
     chrome.runtime.sendMessage({
       action: newState ? 'startMonitoring' : 'stopMonitoring'
     });
+  };
+  
+  // Handle manual sync with server
+  const handleSync = async () => {
+    setSyncMessage('Syncing with server...');
+    const success = await syncTweetsToServer();
+    if (success) {
+      setSyncMessage('Sync completed successfully');
+    } else {
+      setSyncMessage('Sync failed. Check console for details.');
+    }
+    
+    // Clear message after 3 seconds
+    setTimeout(() => {
+      setSyncMessage('');
+    }, 3000);
+  };
+  
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Never';
+    const date = new Date(dateString);
+    return date.toLocaleString();
   };
 
   return (
@@ -100,6 +125,41 @@ const Dashboard = () => {
               </div>
             </div>
             
+            {/* Server Sync Status */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">Server Sync</h3>
+                  <p className="text-sm text-gray-500">
+                    Last synced: {formatDate(syncStatus?.lastSynced)}
+                  </p>
+                  {syncStatus?.error && (
+                    <p className="text-sm text-red-500 mt-1">
+                      Error: {syncStatus.error}
+                    </p>
+                  )}
+                  {syncMessage && (
+                    <p className="text-sm text-blue-500 mt-1">
+                      {syncMessage}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={handleSync}
+                  disabled={syncStatus?.isSyncing}
+                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200 disabled:bg-green-300"
+                >
+                  <svg className="h-4 w-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 2v6h-6"></path>
+                    <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                    <path d="M3 22v-6h6"></path>
+                    <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                  </svg>
+                  {syncStatus?.isSyncing ? 'Syncing...' : 'Sync Now'}
+                </button>
+              </div>
+            </div>
+            
             {/* Privacy notice */}
             <div className="bg-blue-50 rounded-lg p-4 mb-6">
               <div className="flex">
@@ -112,7 +172,7 @@ const Dashboard = () => {
                   <h3 className="text-sm font-medium text-blue-800">Privacy Notice</h3>
                   <div className="mt-2 text-sm text-blue-700">
                     <p>
-                      This extension monitors and records your tweets and replies on Twitter/X. All data is stored locally on your device and is not sent to any external servers. You can enable or disable monitoring at any time using the toggle above.
+                      This extension monitors and records your tweets and replies on Twitter/X. All data is stored locally on your device and sent to our server for analysis. You can enable or disable monitoring at any time using the toggle above.
                     </p>
                     <p className="mt-2">
                       By using this extension, you consent to the collection of this data for analysis and research purposes. You can log out at any time to stop data collection.
