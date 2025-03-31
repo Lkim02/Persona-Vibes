@@ -17,6 +17,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.8.3",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
@@ -24,7 +25,8 @@
     "mailersend": "^2.3.0",
     "mailgun-js": "^0.22.0",
     "mongoose": "^7.5.0",
-    "nodemailer": "^6.9.4"
+    "nodemailer": "^6.9.4",
+    "spotify-web-api-node": "^5.0.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

@@ -2,6 +2,7 @@ const express = require('express');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const tweetRoutes = require('./routes/tweets');
+const { getSongInfo } = require('./scrapper/music');
 require('dotenv').config();
 
 // Initialize express app
@@ -34,5 +35,12 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+getSongInfo("The Shape of You", "Ed Sheeran")
+.then(data => {
+  console.log(data);
+})
+
+//测试
 
 module.exports = app;
