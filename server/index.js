@@ -36,7 +36,7 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-getSongInfo("The Shape of You", "Ed Sheeran")
+getSongInfo("I Still Haven't Found What I'm Looking For", "U2")
 .then(data => {
   console.log(data);
 })
