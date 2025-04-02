@@ -42,16 +42,18 @@ const fetchSongDetail = async (songId) => {
 
 const querySong = async (title, author) => {
     try {
-        const result = await axios.get(`https://genius-song-lyrics1.p.rapidapi.com/search/?q=${title + ' ' + author}&per_page=5&page=1`, {
+        
+        const result = await axios.get(`https://genius-song-lyrics1.p.rapidapi.com/search/?q=${title}&per_page=10&page=1`, {
             headers: {
                 'x-rapidapi-key': process.env.RAPIDAPI_KEY,
                 'x-rapidapi-host': process.env.RAPIDAPI_HOST
             }
         });
-        if (result && result.data && result.data.response && Array.isArray(result.data.response.hits) && result.data.response.hits.length > 0) {
-            const song = result.data.response.hits[0]?.result;
-            return song.id;
+        if (result && result.data && result.data && Array.isArray(result.data.hits) && result.data.hits.length > 0) {
+            const song = result.data.hits.find(hit => hit?.result?.artist_names.toLowerCase().includes(author.toLowerCase()) || author.toLowerCase().includes(hit?.result?.artist_names.toLowerCase()));
+            return song?.result?.id;
         }
+        console.log('未找到歌曲');
         return null;
     } catch(error) {
         console.error('获取歌曲信息失败:', error.message);
