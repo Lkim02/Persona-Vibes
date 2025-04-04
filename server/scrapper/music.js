@@ -6,7 +6,7 @@ const fetchSongLyrics = async (songId) => {
     const result = await axios.get(`https://genius-song-lyrics1.p.rapidapi.com/song/lyrics/?id=${songId}`, {
         headers: {
             'x-rapidapi-key': process.env.RAPIDAPI_KEY,
-            'x-rapidapi-host': process.env.RAPIDAPI_HOST
+            'x-rapidapi-host': process.env.RAPIDAPI_MUSIC_HOST
         }
       });
       if (result && result.data && result.data.response && result.data.response.lyrics) {
@@ -24,7 +24,7 @@ const fetchSongDetail = async (songId) => {
     const result = await axios.get(`https://genius-song-lyrics1.p.rapidapi.com/song/details/?id=${songId}`, {
         headers: {
             'x-rapidapi-key': process.env.RAPIDAPI_KEY,
-            'x-rapidapi-host': process.env.RAPIDAPI_HOST
+            'x-rapidapi-host': process.env.RAPIDAPI_MUSIC_HOST
         }
       });
       if (result && result.data && result.data.song) {
@@ -46,7 +46,7 @@ const querySong = async (title, author) => {
         const result = await axios.get(`https://genius-song-lyrics1.p.rapidapi.com/search/?q=${title}&per_page=10&page=1`, {
             headers: {
                 'x-rapidapi-key': process.env.RAPIDAPI_KEY,
-                'x-rapidapi-host': process.env.RAPIDAPI_HOST
+                'x-rapidapi-host': process.env.RAPIDAPI_MUSIC_HOST
             }
         });
         if (result && result.data && result.data && Array.isArray(result.data.hits) && result.data.hits.length > 0) {

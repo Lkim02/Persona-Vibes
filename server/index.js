@@ -3,6 +3,7 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const tweetRoutes = require('./routes/tweets');
 const { getSongInfo } = require('./scrapper/music');
+const { getBookInfo } = require('./scrapper/book');
 require('dotenv').config();
 
 // Initialize express app
@@ -36,7 +37,7 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-getSongInfo("I Still Haven't Found What I'm Looking For", "U2")
+getBookInfo("House of Sky And Breath", "Sarah J. Maas")
 .then(data => {
   console.log(data);
 })
