@@ -10,6 +10,10 @@ const SERVER_API_URL = "http://localhost:3000/api";
 // Monitoring status
 let isMonitoringEnabled = true;
 
+function timeout(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // Initialize data storage
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.get(['tweets', 'replies', 'isMonitoringEnabled'], (result) => {
@@ -448,3 +452,23 @@ function updateSyncStatus(statusUpdate) {
 
 // Log that background script has loaded
 console.log('Twitter Activity Monitor: Background script loaded');
+
+
+/* ----------------- Tiktok --------------------- */
+// Handle TikTok HTML content
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  // Handle TikTok HTML extraction
+  if (message.action === 'newTiktokVideos' && message.data) {
+    await timeout(5000);
+    // Send success response
+    sendResponse({
+      success: true,
+      data: message.data
+    });
+  }
+  
+  // Return true for async response
+  return true;
+});
+
+

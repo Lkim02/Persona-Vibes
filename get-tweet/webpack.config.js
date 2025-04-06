@@ -10,6 +10,7 @@ module.exports = {
   entry: {
     background: './background.js',
     content: './content.js',
+    'tiktok-content': './tiktok-content.js'
   },
   output: {
     filename: '[name].js',

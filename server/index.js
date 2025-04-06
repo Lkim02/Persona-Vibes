@@ -37,11 +37,6 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-getBookInfo("House of Sky And Breath", "Sarah J. Maas")
-.then(data => {
-  console.log(data);
-})
-
 //测试
 
 module.exports = app;

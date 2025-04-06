@@ -24,7 +24,9 @@ const userSchema = new mongoose.Schema({
   confirmationTokenExpires: {
     type: Date,
     default: null
-  }
+  },
+  profile: String,
+  todayEmotion: String
 }, { timestamps: true });
 
 // Hash password before saving
