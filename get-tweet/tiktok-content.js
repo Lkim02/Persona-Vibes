@@ -3,6 +3,74 @@
 
 console.log('TikTok HTML Extractor: Content script loaded');
 const videosMap = {};
+
+/**
+ * Highlights a video div element with a modern, eye-catching style
+ * @param {HTMLElement} videoDiv - The video container element to highlight
+ */
+function highlightVideo(videoDiv) {
+  // Create a wrapper element for the highlight effect
+  const highlightWrapper = document.createElement('div');
+  highlightWrapper.className = 'persona-vibes-recommendation';
+  
+  // Apply modern styling to the wrapper
+  highlightWrapper.style.cssText = `
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 3px solid #FF5C8D;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(255, 92, 141, 0.6);
+    pointer-events: none;
+    z-index: 999;
+    animation: pulse-highlight 2s infinite;
+  `;
+  
+  // Create a label element
+  const recommendationLabel = document.createElement('div');
+  recommendationLabel.className = 'persona-vibes-label';
+  recommendationLabel.textContent = 'Recommended for you';
+  
+  // Style the label
+  recommendationLabel.style.cssText = `
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #FF5C8D, #FF9A5C);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    pointer-events: none;
+  `;
+  
+  // Add the animation style to the document if it doesn't exist yet
+  if (!document.getElementById('persona-vibes-styles')) {
+    const styleElement = document.createElement('style');
+    styleElement.id = 'persona-vibes-styles';
+    styleElement.textContent = `
+      @keyframes pulse-highlight {
+        0% { box-shadow: 0 0 15px rgba(255, 92, 141, 0.6); }
+        50% { box-shadow: 0 0 20px rgba(255, 92, 141, 0.8); }
+        100% { box-shadow: 0 0 15px rgba(255, 92, 141, 0.6); }
+      }
+    `;
+    document.head.appendChild(styleElement);
+  }
+  
+  // Add the elements to the video container
+  videoDiv.style.position = 'relative';
+  videoDiv.appendChild(highlightWrapper);
+  videoDiv.appendChild(recommendationLabel);
+  
+  console.log('TikTok HTML Extractor: Video highlighted as recommended');
+}
+
 // Function to extract HTML content
 function extractHtml() {
   // Get the entire HTML content
@@ -17,6 +85,9 @@ function extractHtml() {
     videosMap[videoUrl] = video;
     newVideoUrls.push(videoUrl);
   }
+  if (newVideoUrls.length === 0) {
+    return;
+  }
   chrome.runtime.sendMessage({
     action: 'newTiktokVideos',
     data: {
@@ -25,9 +96,18 @@ function extractHtml() {
     }
   }, (response) => {
     if (response && response.success) {
-      console.log('TikTok HTML Extractor: New videos sent to background script', response.data);
+      console.log('TikTok HTML Extractor: New videos sent to background script');
+      const recommendations = response.data.recommendations;
+      const recommendationsUrls = recommendations.map(item => item.videoUrl);
+      // Tag videos
+      for (const url of recommendationsUrls) {
+        const videoDiv = videosMap[url];
+        if (videoDiv) {
+          highlightVideo(videoDiv);
+        }
+      }
     } else {
-      console.error('TikTok HTML Extractor: Failed to send new videos to background script');
+      console.error('TikTok HTML Extractor: Failed to send new videos to background script: ' + response.error);
     }
   });
 }

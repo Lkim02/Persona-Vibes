@@ -1,4 +1,4 @@
-const processWithDeepSeek = require('./llm');
+const {processWithDeepSeek} = require('./llm');
 const { userProfilePrompt, userEmotionPrompt } = require('./analysis.prompt');
 
 /**

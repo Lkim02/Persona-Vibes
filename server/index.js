@@ -2,6 +2,7 @@ const express = require('express');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const tweetRoutes = require('./routes/tweets');
+const recommendRoutes = require('./routes/recommend');
 const { getSongInfo } = require('./scrapper/music');
 const { getBookInfo } = require('./scrapper/book');
 require('dotenv').config();
@@ -19,6 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tweets', tweetRoutes);
+app.use('/api/recommend', recommendRoutes);
 
 // Root route
 app.get('/', (req, res) => {
