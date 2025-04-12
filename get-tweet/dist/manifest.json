@@ -25,7 +25,9 @@
     "https://twitter.com/*",
     "https://x.com/*",
     "http://localhost:3000/*",
-    "https://www.tiktok.com/*"
+    "https://www.tiktok.com/*",
+    "https://open.spotify.com/*",
+    "https://openlibrary.org/*"
   ],
   "content_scripts": [
     {
@@ -35,6 +37,14 @@
     {
       "matches": ["https://www.tiktok.com/*"],
       "js": ["tiktok-content.js"]
+    },
+    {
+      "matches": ["https://open.spotify.com/*"],
+      "js": ["spotify-content.js"]
+    },
+    {
+      "matches": ["https://openlibrary.org/*"],
+      "js": ["book-content.js"]
     }
   ],
   "background": {

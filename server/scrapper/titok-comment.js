@@ -1,4 +1,28 @@
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+const { SocksProxyAgent } = require('socks-proxy-agent');
+
+/**
+ * 从代理文件中随机获取一个代理
+ * @returns {string} 代理URL
+ */
+function getRandomProxy() {
+  try {
+    // 读取代理文件
+    const proxyFilePath = path.join(__dirname, 'ip-proxy.txt');
+    const proxyLines = fs.readFileSync(proxyFilePath, 'utf8').trim().split('\n');
+    
+    // 随机选择一行
+    const randomLine = proxyLines[Math.floor(Math.random() * proxyLines.length)];
+    
+    // 返回代理URL
+    return randomLine.trim();
+  } catch (error) {
+    console.error(`获取代理失败: ${error.message}`);
+    return null;
+  }
+}
 
 /**
  * 获取TikTok视频评论的最简单函数
@@ -17,29 +41,36 @@ async function getTikTokComments(videoId) {
       'Referer': `https://www.tiktok.com/@user/video/${videoId}`
     };
     
+    // 获取随机代理
+    const proxyUrl = getRandomProxy();
+    const proxyAgent = proxyUrl ? new SocksProxyAgent(proxyUrl) : null;
+    
+    // 配置请求选项
+    const requestOptions = { 
+      headers,
+      ...(proxyAgent && { httpsAgent: proxyAgent })
+    };
+    
     // 发送请求
-    const response = await axios.get(url, { headers });
+    console.log(`使用代理: ${proxyUrl || '无代理'}`);
+    const response = await axios.get(url, requestOptions);
     
     // 检查响应
     if (!response.data || !response.data.comments) {
       console.log('未找到评论或响应格式不正确');
-      return;
+      return [];
     }
     
     // 打印评论
-    console.log(`找到 ${response.data.comments.length} 条评论：\n`);
+    console.log(`找到 ${response.data.comments.length} 条评论`);
     
-    // response.data.comments.forEach((comment, index) => {
-    //   console.log(`${index + 1}. ${comment.user.nickname}: ${comment.text}`);
-    // });
-    // console.log(response.data.comments);
     return response.data.comments.map(comment => comment.text);
     
   } catch (error) {
     console.error(`获取评论失败: ${error.message}`);
+    return [];
   }
 }
-
 
 module.exports = {
   getTikTokComments

@@ -32,7 +32,6 @@ const fetchBookDetail = async (bookId) => {
                 'x-rapidapi-host': process.env.RAPIDAPI_BOOK_HOST
             }
         });
-        console.log(result.data)
         if (result && result.data) {
             return {
                 description: result.data.description,

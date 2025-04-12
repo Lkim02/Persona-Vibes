@@ -5,7 +5,7 @@
 const TWEET_API_URL_PATTERN = "https://x.com/i/api/graphql/UYy4T67XpYXgWKOafKXB_A/CreateTweet";
 
 // Server API URL
-const SERVER_API_URL = "http://localhost:3000/api";
+const SERVER_URL = "http://localhost:3000";
 
 // Monitoring status
 let isMonitoringEnabled = true;
@@ -271,7 +271,7 @@ async function saveToServer(tweetData, isReply) {
     };
     
     // Make API request
-    const response = await fetch(`${SERVER_API_URL}/tweets`, {
+    const response = await fetch(`${SERVER_URL}/api/tweets`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -375,7 +375,7 @@ async function syncAllToServer() {
         };
         
         // Make API request
-        const response = await fetch(`${SERVER_API_URL}/tweets`, {
+        const response = await fetch(`${SERVER_URL}/api/tweets`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -455,20 +455,165 @@ console.log('Twitter Activity Monitor: Background script loaded');
 
 
 /* ----------------- Tiktok --------------------- */
-// Handle TikTok HTML content
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-  // Handle TikTok HTML extraction
   if (message.action === 'newTiktokVideos' && message.data) {
-    await timeout(5000);
-    // Send success response
-    sendResponse({
-      success: true,
-      data: message.data
+    // 获取JWT token
+    chrome.storage.local.get(['auth'], async function(result) {
+      const auth = result.auth;
+      if (!auth || !auth.token) {
+        sendResponse({success: false, error: 'No authentication token found'});
+        return;
+      }
+      
+      try {
+        // 发送数据到服务器，包含token
+        const response = await fetch(`${SERVER_URL}/api/recommend/videos`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${auth.token}`
+          },
+          body: JSON.stringify({
+            videoesUrls: message.data.newVideoUrls,
+
+          })
+        });
+        console.log("Waiting .....................................................................")
+        
+        const data = await response.json();
+        console.log(data);
+        sendResponse({success: true, data});
+      } catch (error) {
+        sendResponse({success: false, error: error.message});
+      }
     });
+    
+    return true; // 保持连接开放以进行异步响应
   }
-  
-  // Return true for async response
-  return true;
 });
 
+/* ----------------- Spotify --------------------- */
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  if (message.action === 'newMusicList' && message.data) {
+    // 获取JWT token
+    chrome.storage.local.get(['auth'], async function(result) {
+      const auth = result.auth;
+      if (!auth || !auth.token) {
+        sendResponse({success: false, error: 'No authentication token found'});
+        return;
+      }
+      sendResponse({success: true});
+      try {
+        // 分批发送数据到服务器，包含token
+        const musicList = message.data.musicList;
+        for (let i = 0; i < musicList.length; i += 3) {
+          const batch = musicList.slice(i, i + 3);
+          const response = await fetch(`${SERVER_URL}/api/recommend/music`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${auth.token}`
+            },
+            body: JSON.stringify({
+              musicList: batch,
+              url: message.data.url
+            })
+          });
+          console.log("Waiting .....................................................................")
+          
+          const data = await response.json();
+          const recommendations = data.recommendations;
+          const url = data.url;
+          console.log(url);
+          if (Array.isArray(recommendations) && recommendations.length > 0) {
+            chrome.tabs.query({
+              url: url
+            }, (tabs) => {
+              if (tabs.length > 0) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                  action: 'musicRecommendations',
+                  data: recommendations
+                });
+              }
+            })
+          }
+        }
+      
+      } catch (error) {
+        
+      }
+    });
+    
+    return true; // 保持连接开放以进行异步响应
+  }
+});
 
+/* ----------------- OpenLibrary Books --------------------- */
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  if (message.action === 'newBookList' && message.data) {
+    // 获取JWT token
+    chrome.storage.local.get(['auth'], async function(result) {
+      const auth = result.auth;
+      if (!auth || !auth.token) {
+        sendResponse({success: false, error: 'No authentication token found'});
+        return;
+      }
+      sendResponse({success: true});
+      try {
+        // 分批发送数据到服务器，包含token
+        const bookList = message.data.bookList;
+        for (let i = 0; i < bookList.length; i += 5) {
+          const batch = bookList.slice(i, i + 5);
+          const response = await fetch(`${SERVER_URL}/api/recommend/books`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${auth.token}`
+            },
+            body: JSON.stringify({
+              bookList: batch,
+              url: message.data.url
+            })
+          });
+          console.log("Waiting for book recommendations...");
+          
+          const data = await response.json();
+          const recommendations = data.recommendations;
+          const url = data.url;
+          console.log(`Received book recommendations for URL: ${url}`);
+          
+          if (Array.isArray(recommendations) && recommendations.length > 0) {
+            // 使用更宽松的URL匹配模式
+            chrome.tabs.query({
+              url: "*://*.openlibrary.org/*"
+            }, (tabs) => {
+              if (tabs.length > 0) {
+                console.log(`Found ${tabs.length} OpenLibrary tabs, sending to tab ${tabs[0].id}`);
+                
+                // 添加错误处理
+                chrome.tabs.sendMessage(tabs[0].id, {
+                  action: 'bookRecommendations',
+                  data: recommendations
+                }, (response) => {
+                  if (chrome.runtime.lastError) {
+                    console.error('Error sending book recommendations:', chrome.runtime.lastError.message);
+                  } else {
+                    console.log('Book recommendations sent successfully');
+                  }
+                });
+              } else {
+                console.error('No OpenLibrary tabs found');
+              }
+            });
+          }
+
+          await timeout(2000);
+        }
+      } catch (error) {
+        console.error('Error processing book recommendations:', error);
+      }
+    });
+    
+    return true; // 保持连接开放以进行异步响应
+  }
+});

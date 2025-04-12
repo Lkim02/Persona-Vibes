@@ -73,7 +73,8 @@ const getSongInfo = async (title, author) => {
         );
         return {
             lyrics,
-            ...detail
+            ...detail,
+            tags: detail.tags?.map(tag => tag.name) || []
         };
     } catch(error) {
         console.error('获取歌曲信息失败:', error.message);
