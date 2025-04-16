@@ -1,113 +1,113 @@
-// 用户画像分析提示词
-exports.userProfilePrompt = `你是一位专业的用户画像分析师，现在需要你根据用户的推文历史记录分析出用户的详细画像。请仔细阅读以下推文内容，并提供全面的用户画像分析。
+// User profile analysis prompt
+exports.userProfilePrompt = `You are a professional user profile analyst, and now you need to analyze the user's detailed profile based on their tweet history. Please carefully read the following tweet content and provide a comprehensive user profile analysis.
 
-输入数据格式：你将收到一个JSON格式的推文数组，每条推文包含"content"(内容)和"createdAt"(发布时间)字段。
-输出格式：你需要输出纯文本格式的分析报告，不要包含任何JSON或其他标记语言。
+Input data format: You will receive an array of tweets in JSON format, each tweet containing "content" (content) and "createdAt" (publishing time) fields.
+Output format: You need to output a plain text format analysis report without any JSON or other markup language.
 
-请从以下维度进行分析：
+Please analyze the following dimensions:
 
-1. 基本人口统计学特征：
-   - 可能的年龄段
-   - 可能的性别倾向
-   - 可能的地理位置/所在城市（如果有相关线索）
-   - 可能的职业或行业背景
+1. Basic demographic characteristics:
+   - Possible age range
+   - Possible gender tendency
+   - Possible geographic location/city (if there are relevant clues)
+   - Possible occupation or industry background
 
-2. 兴趣爱好：
-   - 主要兴趣领域（至少3-5个，按重要性排序）
-   - 文化偏好（电影、音乐、书籍、艺术等）
-   - 体育或户外活动偏好
-   - 科技产品偏好
+2. Interests and hobbies:
+   - Main areas of interest (at least 3-5, ranked by importance)
+   - Cultural preferences (movies, music, books, art, etc.)
+   - Sports or outdoor activity preferences
+   - Technology product preferences
 
-3. 价值观与态度：
-   - 核心价值观（如家庭、事业、自我提升等）
-   - 政治或社会议题立场（如果有）
-   - 对生活的总体态度（乐观/悲观，积极/消极）
-   - 对新事物的接受程度
+3. Values and attitudes:
+   - Core values (such as family, career, self-improvement, etc.)
+   - Political or social issue positions (if any)
+   - Overall attitude towards life (optimistic/pessimistic, positive/negative)
+   - Acceptance of new things
 
-4. 行为模式：
-   - 日常活动规律
-   - 社交行为特点
-   - 消费习惯和偏好
-   - 信息获取渠道
+4. Behavioral patterns:
+   - Daily activity patterns
+   - Social behavior characteristics
+   - Consumption habits and preferences
+   - Information acquisition channels
 
-5. 表达风格：
-   - 语言表达特点（正式/非正式，幽默/严肃等）
-   - 情感表达倾向（情绪化程度，情感表达方式）
-   - 互动方式（主动/被动，合作/对抗等）
+5. Expression style:
+   - Language expression characteristics (formal/informal, humorous/serious, etc.)
+   - Emotional expression tendencies (degree of emotionality, ways of expressing emotions)
+   - Interaction methods (active/passive, cooperative/confrontational, etc.)
 
-6. 潜在需求：
-   - 当前可能面临的挑战或问题
-   - 潜在的产品或服务需求
-   - 信息或内容需求
+6. Potential needs:
+   - Current challenges or problems the user may be facing
+   - Potential product or service needs
+   - Information or content needs
 
-7. 用户画像总结：
-   - 用户类型标签（如"科技爱好者"、"文化达人"、"户外运动爱好者"等，给出3-5个最贴切的标签）
-   - 用户画像的简要描述（100-150字）
-   - 推荐给该用户的内容类型
+7. User profile summary:
+   - User type labels (such as "tech enthusiast", "culture expert", "outdoor sports enthusiast", etc., give 3-5 most fitting labels)
+   - Brief description of the user profile (100-150 words)
+   - Content types recommended for this user
 
-请确保你的分析：
-- 基于事实，避免过度推测
-- 注意推文的时间顺序，把握用户兴趣和观点的变化趋势
-- 提供具体的例子支持你的分析
-- 考虑推文的上下文和潜在含义
-- 避免做出道德判断
+Please ensure your analysis:
+- Is based on facts, avoiding excessive speculation
+- Pays attention to the chronological order of tweets to grasp trends in user interests and views
+- Provides specific examples to support your analysis
+- Considers the context and potential implications of tweets
+- Avoids making moral judgments
 
-以下是用户的推文历史记录（JSON格式）：
+The following is the user's tweet history (JSON format):
 {{tweets}}
 
-请基于以上信息，提供一份全面、客观、深入的用户画像分析，以纯文本格式输出。`;
+Based on the above information, please provide a comprehensive, objective, and in-depth user profile analysis in plain text format.`;
 
-// 用户情绪分析提示词
-exports.userEmotionPrompt = `你是一位专业的情绪分析专家，现在需要你根据用户的推文历史记录分析用户的情绪状态和变化趋势。请仔细阅读以下推文内容，并提供全面的情绪分析。
+// User emotion analysis prompt
+exports.userEmotionPrompt = `You are a professional emotion analysis expert, and now you need to analyze the user's emotional state and change trends based on their tweet history. Please carefully read the following tweet content and provide a comprehensive emotion analysis.
 
-输入数据格式：你将收到一个JSON格式的推文数组，每条推文包含"content"(内容)和"createdAt"(发布时间)字段。
-输出格式：你需要输出纯文本格式的分析报告，不要包含任何JSON或其他标记语言。
+Input data format: You will receive an array of tweets in JSON format, each tweet containing "content" (content) and "createdAt" (publishing time) fields.
+Output format: You need to output a plain text format analysis report without any JSON or other markup language.
 
-请从以下维度进行情绪分析：
+Please analyze the following dimensions of emotion:
 
-1. 总体情绪基调：
-   - 主导情绪（如快乐、愤怒、悲伤、焦虑、平静等）
-   - 情绪强度（轻微、中等、强烈）
-   - 情绪稳定性（稳定或波动）
+1. Overall emotional tone:
+   - Dominant emotions (such as happiness, anger, sadness, anxiety, calmness, etc.)
+   - Emotional intensity (mild, moderate, intense)
+   - Emotional stability (stable or fluctuating)
 
-2. 情绪变化趋势：
-   - 按时间顺序分析情绪变化
-   - 识别情绪高峰和低谷时期
-   - 分析可能引起情绪变化的事件或话题
+2. Emotional change trends:
+   - Analysis of emotional changes in chronological order
+   - Identification of emotional peaks and valleys
+   - Analysis of events or topics that may have caused emotional changes
 
-3. 情绪触发因素：
-   - 识别引发积极情绪的主题或事件
-   - 识别引发消极情绪的主题或事件
-   - 分析用户对特定话题的情绪反应模式
+3. Emotional triggers:
+   - Identification of themes or events that trigger positive emotions
+   - Identification of themes or events that trigger negative emotions
+   - Analysis of the user's emotional response patterns to specific topics
 
-4. 情绪表达方式：
-   - 直接表达（明确表达情感的词汇）
-   - 间接表达（隐喻、讽刺、幽默等）
-   - 表情符号和语气词的使用
+4. Ways of expressing emotions:
+   - Direct expression (vocabulary that explicitly expresses feelings)
+   - Indirect expression (metaphors, sarcasm, humor, etc.)
+   - Use of emoticons and interjections
 
-5. 社交互动中的情绪：
-   - 与他人互动时的情绪状态
-   - 对他人情绪的敏感度和反应
-   - 情绪共鸣或情绪传染的倾向
+5. Emotions in social interactions:
+   - Emotional state when interacting with others
+   - Sensitivity and reaction to others' emotions
+   - Tendencies towards emotional resonance or emotional contagion
 
-6. 情绪调节能力：
-   - 从负面情绪恢复的速度
-   - 应对压力和挑战的情绪策略
-   - 自我安慰或寻求支持的模式
+6. Emotional regulation ability:
+   - Speed of recovery from negative emotions
+   - Emotional strategies for coping with stress and challenges
+   - Patterns of self-comfort or seeking support
 
-7. 情绪分析总结：
-   - 用户的情绪特征标签（如"情绪稳定型"、"积极乐观型"、"情绪敏感型"等）
-   - 情绪健康状况的整体评估
-   - 情绪模式对用户行为和决策的可能影响
+7. Emotion analysis summary:
+   - User's emotional characteristic labels (such as "emotionally stable type", "positive optimistic type", "emotionally sensitive type", etc.)
+   - Overall assessment of emotional health status
+   - Possible impact of emotional patterns on user behavior and decision-making
 
-请确保你的分析：
-- 基于文本中的具体表达和用词
-- 考虑上下文和时间序列
-- 避免过度解读或病理化正常的情绪波动
-- 提供具体的例子支持你的分析
-- 注意文化和个人表达差异
+Please ensure your analysis:
+- Is based on specific expressions and wording in the text
+- Considers context and time sequence
+- Avoids over-interpreting or pathologizing normal emotional fluctuations
+- Provides specific examples to support your analysis
+- Pays attention to cultural and personal expression differences
 
-以下是用户的推文历史记录（JSON格式）：
+The following is the user's tweet history (JSON format):
 {{tweets}}
 
-请基于以上信息，提供一份全面、客观、深入的用户情绪分析报告，以纯文本格式输出。`;
+Based on the above information, please provide a comprehensive, objective, and in-depth user emotion analysis report in plain text format.`;
